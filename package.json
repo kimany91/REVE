@@ -54,14 +54,14 @@
           ]
         }
       ],
-      "icon": "build/icon.png",
-      "artifactName": "REVE-${version}-Windows-${target}.${ext}"
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "REVE"
+      "shortcutName": "REVE",
+      "artifactName": "REVE-${version}-Windows-installateur.${ext}"
     },
     "portable": {
       "artifactName": "REVE-${version}-Windows-portable.exe"

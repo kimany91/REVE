@@ -36,7 +36,7 @@ Tu n'as **jamais besoin d'écrire de code** : tout se fait avec des boutons.
 
 1. Sur GitHub, ouvre l'onglet **Actions** → dernier « Construire REVE » réussi.
 2. En bas, dans **Artifacts**, télécharge :
-   - **REVE-Windows** → lance `REVE-…-Windows-nsis.exe` (installateur) ou `REVE-…-Windows-portable.exe` (sans installation) ;
+   - **REVE-Windows** → lance `REVE-…-Windows-installateur.exe` (installateur) ou `REVE-…-Windows-portable.exe` (sans installation) ;
    - **REVE-macOS** → ouvre `REVE-…-Mac.dmg` et glisse REVE dans Applications.
 3. Quand une version est publiée (tag `v1.0.0`…), les fichiers sont aussi dans **Releases**.
 
