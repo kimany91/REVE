@@ -9,6 +9,8 @@ Usage : python3 calc_emulator.py <numworks|ti83> <script.py> <dossier_sortie>
 import sys, os, types
 from PIL import Image, ImageDraw, ImageFont
 
+Image.init()  # charge les formats d'image avant de remplacer des modules
+
 MONO = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
 SANS = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 SANSB = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
@@ -93,7 +95,8 @@ NW_KEYS = ['LEFT', 'UP', 'DOWN', 'RIGHT', 'OK', 'BACK', 'HOME', 'ONOFF', 'SHIFT'
 
 def run(model, script, actions, outdir):
     emu = Emu(model, actions, outdir)
-    for m in ['kandinsky', 'ion', 'ti_draw', 'ti_system', 'time']:
+    saved = {m: sys.modules.get(m) for m in ['kandinsky', 'ion', 'ti_draw', 'ti_system', 'time']}
+    for m in saved:
         sys.modules.pop(m, None)
     if model == 'numworks':
         kd = types.ModuleType('kandinsky')
@@ -120,6 +123,12 @@ def run(model, script, actions, outdir):
         exec(compile(code, script, 'exec'), {'__name__': '__main__'})
     except Stop:
         pass
+    finally:
+        for m, mod in saved.items():
+            if mod is None:
+                sys.modules.pop(m, None)
+            else:
+                sys.modules[m] = mod
     return emu.snaps
 
 
