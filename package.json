@@ -35,7 +35,9 @@
     "files": [
       "src/**/*",
       "build/icon.png",
-      "package.json"
+      "package.json",
+      "!**/node_modules/canvas/**",
+      "!**/node_modules/@mapbox/**"
     ],
     "win": {
       "target": [
@@ -77,6 +79,7 @@
       "category": "public.app-category.education",
       "identity": null,
       "artifactName": "REVE-${version}-Mac.${ext}"
-    }
+    },
+    "npmRebuild": false
   }
 }
