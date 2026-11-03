@@ -1,0 +1,70 @@
+# Fabrique automatiquement les installateurs Windows (.exe) et Mac (.dmg).
+# Ils se téléchargent dans l'onglet "Actions" de GitHub (section "Artifacts"),
+# ou dans "Releases" quand une version (tag v1.0.0, v1.1.0…) est publiée.
+name: Construire REVE
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: npm ci
+      - run: pip install pillow reportlab python-docx python-pptx
+      - name: Cours de démo + analyse
+        run: |
+          python tools/make-demo-courses.py
+          node tools/selftest.js
+      - name: App calculatrice (émulateur)
+        run: |
+          node tools/seed-demo.js /tmp/ud
+          node tools/build-calc-demo.js /tmp/ud /tmp/calc
+          python tools/calc_emulator.py numworks /tmp/calc/reve.py /tmp/out
+          python tools/calc_emulator.py ti83 /tmp/calc/REVE.py /tmp/out
+
+  build:
+    needs: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Windows
+        if: runner.os == 'Windows'
+        run: npx electron-builder --win --publish never
+      - name: Mac
+        if: runner.os == 'macOS'
+        run: npx electron-builder --mac --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: REVE-${{ runner.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+          if-no-files-found: error
+      - name: Publier la version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.dmg

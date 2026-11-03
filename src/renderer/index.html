@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>REVE</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo">
+      <div class="logo-mark">☾</div>
+      <div><b>REVE</b><small>Révision portable</small></div>
+    </div>
+    <nav>
+      <button data-view="subjects" class="active"><span>📚</span>Mes matières</button>
+      <button data-view="import"><span>📥</span>Importer un ZIP</button>
+      <button data-view="calc"><span>🧮</span>Calculatrice</button>
+      <button data-view="settings"><span>⚙️</span>Réglages</button>
+    </nav>
+    <div class="side-foot">
+      <div class="ai-badge" title="Le moteur d'analyse tourne sur ton ordinateur, sans internet">
+        <span class="pulse"></span> REVE-Net · IA locale
+      </div>
+      <button id="moodle-pill" class="moodle-pill"></button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- MATIERES -->
+    <section id="view-subjects" class="view active">
+      <header class="top">
+        <div>
+          <h1>Mes matières</h1>
+          <p class="sub" id="subjects-sub">Tous tes cours, résumés et triés par chapitre.</p>
+        </div>
+        <div class="actions">
+          <input id="search" class="search" placeholder="🔍  Rechercher une matière…">
+          <button class="btn ghost" id="btn-refresh">↻ Actualiser Moodle</button>
+          <button class="btn" id="btn-import-top">＋ Importer un ZIP</button>
+        </div>
+      </header>
+      <div id="subjects-grid" class="grid"></div>
+    </section>
+
+    <!-- DETAIL MATIERE -->
+    <section id="view-subject" class="view">
+      <header class="top">
+        <div class="title-wrap">
+          <button class="back" id="back">←</button>
+          <div class="subject-icon big" id="d-icon"></div>
+          <div>
+            <h1 id="d-title" contenteditable="true" spellcheck="false" title="Clique pour renommer"></h1>
+            <p class="sub" id="d-sub"></p>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="d-dl">⬇ Télécharger le ZIP des cours</button>
+          <button class="btn" id="d-calc">🧮 Mettre sur la calculatrice</button>
+          <button class="btn icon danger" id="d-del" title="Supprimer cette matière">🗑</button>
+        </div>
+      </header>
+      <div class="legend" id="legend"></div>
+      <div id="chapters"></div>
+    </section>
+
+    <!-- IMPORT -->
+    <section id="view-import" class="view">
+      <header class="top">
+        <div>
+          <h1>Importer un ZIP</h1>
+          <p class="sub">Tu as déjà tous tes cours dans un ZIP ? Dépose-le ici : REVE le décompresse, lit chaque support et fait les fiches.</p>
+        </div>
+      </header>
+      <div id="drop" class="drop">
+        <div class="drop-ico">🗂️</div>
+        <h2>Glisse ton ZIP ici</h2>
+        <p>ou des fichiers PDF, Word, PowerPoint, OpenDocument, texte…</p>
+        <button class="btn" id="btn-pick">Choisir sur l'ordinateur</button>
+      </div>
+      <div class="how">
+        <div><b>1</b><span>Décompression du ZIP (même les ZIP dans le ZIP)</span></div>
+        <div><b>2</b><span>Lecture des PDF, Word, PowerPoint…</span></div>
+        <div><b>3</b><span>REVE-Net repère définitions, formules, lois et méthodes</span></div>
+        <div><b>4</b><span>Fiches triées par matière et par chapitre</span></div>
+      </div>
+    </section>
+
+    <!-- CALCULATRICE -->
+    <section id="view-calc" class="view">
+      <header class="top">
+        <div>
+          <h1>Transfert sur calculatrice</h1>
+          <p class="sub">Crée l'app <b>REVE</b> : un écran de calcul qui marche, et une touche secrète qui ouvre tes fiches.</p>
+        </div>
+      </header>
+      <div class="calc-layout">
+        <div class="calc-steps">
+          <div class="step">
+            <h3><i>1</i>Ta calculatrice</h3>
+            <div class="models" id="models">
+              <button class="model" data-model="numworks"><div class="mini nw"></div><b>NumWorks</b><small>Envoi direct par USB</small></button>
+              <button class="model" data-model="ti83"><div class="mini ti"></div><b>TI-83 Premium CE</b><small>Édition Python</small></button>
+            </div>
+          </div>
+          <div class="step">
+            <h3><i>2</i>Les matières à mettre dedans</h3>
+            <div id="calc-subjects" class="chips"></div>
+          </div>
+          <div class="step">
+            <h3><i>3</i>Réglages</h3>
+            <label class="row" id="key-row">Touche REVE (ouvre / ferme les fiches)
+              <select id="calc-key"></select>
+            </label>
+            <p class="hint" id="ti-key-hint" style="display:none">Sur TI : la touche <b>[math]</b> ouvre les fiches (n'importe quelle touche « spéciale » marche : la première pressée devient la touche REVE). <b>[annul]</b> les referme.</p>
+            <label class="row">Place utilisée sur la calculatrice
+              <span class="range"><input type="range" id="calc-budget" min="3000" max="30000" step="500"><b id="budget-val"></b></span>
+            </label>
+            <p class="hint" id="calc-info"></p>
+          </div>
+          <div class="step">
+            <h3><i>4</i>Envoyer</h3>
+            <div class="send-row">
+              <button class="btn big" id="btn-send">⚡ Envoyer par USB</button>
+              <button class="btn ghost" id="btn-export">💾 Exporter le fichier</button>
+            </div>
+            <p class="hint" id="send-hint"></p>
+          </div>
+        </div>
+        <div class="calc-preview">
+          <div class="device" id="device">
+            <div class="device-top"><span id="device-brand">NumWorks</span></div>
+            <canvas id="screen" width="320" height="222"></canvas>
+            <div class="pad">
+              <div class="dpad">
+                <button data-k="up">▲</button><button data-k="left">◀</button><button data-k="ok">OK</button><button data-k="right">▶</button><button data-k="down">▼</button>
+              </div>
+              <div class="keys">
+                <button data-k="reve" class="k-reve" id="k-reve">REVE</button>
+                <button data-k="del">⌫</button>
+                <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="/">÷</button>
+                <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="*">×</button>
+                <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="-">−</button>
+                <button data-k="0">0</button><button data-k=".">.</button><button data-k="exe" class="k-exe">EXE</button><button data-k="+">+</button>
+              </div>
+            </div>
+          </div>
+          <p class="hint center">Aperçu interactif : essaie la touche <b>REVE</b>, les flèches et les calculs.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGLAGES -->
+    <section id="view-settings" class="view">
+      <header class="top"><div><h1>Réglages</h1><p class="sub">Connexion à ton école et infos sur l'IA.</p></div></header>
+      <div class="cards">
+        <div class="card">
+          <h3>🎓 Moodle de ton école</h3>
+          <p class="hint">Copie l'adresse de ton Moodle (celle que tu vois dans le navigateur). REVE ouvre la vraie page de connexion de l'école, puis reste connecté.</p>
+          <div class="field"><input id="moodle-url" placeholder="ex : moodle.mon-lycee.fr"><button class="btn" id="btn-connect">Se connecter</button></div>
+          <div id="moodle-status" class="status"></div>
+        </div>
+        <div class="card">
+          <h3>🧠 REVE-Net, l'IA intégrée</h3>
+          <p class="hint">Un petit réseau de neurones, livré avec le logiciel, lit chaque phrase de tes cours et décide si c'est une <b>définition</b>, une <b>formule</b>, une <b>loi</b>, une <b>méthode</b>, un <b>exemple</b> ou du blabla. Un algorithme de résumé (TextRank) garde les idées centrales de chaque chapitre.</p>
+          <p class="hint">Tout se passe sur ton ordinateur : pas d'internet, pas de compte, pas de Claude.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="busy" class="busy"><div class="busy-box"><div class="spinner"></div><p id="busy-label">Analyse…</p><div class="bar"><i id="busy-bar"></i></div></div></div>
+<div id="toast" class="toast"></div>
+<script src="preview.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

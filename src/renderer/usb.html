@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Transfert vers la NumWorks</title>
+<style>
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f1222; color: #eef0ff; display: grid; place-items: center; height: 100vh; text-align: center; }
+  .box { width: 360px; }
+  .ico { font-size: 54px; }
+  h1 { font-size: 19px; margin: 10px 0 6px; }
+  p { color: #a9aed0; font-size: 14px; line-height: 1.5; margin: 6px 0 16px; }
+  button { background: #ffb734; color: #1b1300; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; padding: 12px 22px; cursor: pointer; }
+  button.sec { background: #262b4a; color: #eef0ff; }
+  .bar { height: 8px; background: #262b4a; border-radius: 6px; overflow: hidden; margin: 14px 0; }
+  .bar i { display: block; height: 100%; width: 0; background: #ffb734; transition: width .4s; }
+  .err { color: #ff8a8a; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="ico" id="ico">🔌</div>
+  <h1 id="title">Branche ta NumWorks</h1>
+  <p id="msg">Relie la calculatrice à l'ordinateur avec son câble USB, allume-la, puis clique sur « Envoyer ».</p>
+  <div class="bar"><i id="bar"></i></div>
+  <button id="go">Envoyer l'app REVE</button>
+  <button id="close" class="sec" style="display:none">Fermer</button>
+</div>
+<script>
+  const { ipcRenderer } = require('electron');
+  const Numworks = require('upsilon.js');
+  const code = Buffer.from(new URLSearchParams(location.search).get('code'), 'base64').toString('utf8');
+  const $ = (id) => document.getElementById(id);
+  const set = (ico, t, m, pct, err) => { $('ico').textContent = ico; $('title').textContent = t; $('msg').textContent = m; $('msg').className = err ? 'err' : ''; if (pct != null) $('bar').style.width = pct + '%'; };
+  $('close').onclick = () => window.close();
+  $('go').onclick = async () => {
+    $('go').disabled = true;
+    const calc = new Numworks();
+    try {
+      set('🔎', 'Recherche de la calculatrice…', 'Garde la NumWorks allumée et branchée.', 15);
+      await new Promise((ok, ko) => calc.detect(ok, ko));
+      set('📖', 'Lecture de la mémoire…', 'Tes autres scripts sont conservés.', 40);
+      const storage = await calc.backupStorage();
+      storage.records = storage.records.filter((r) => !(r.name === 'reve' && r.type === 'py'));
+      storage.records.push({ name: 'reve', type: 'py', autoImport: false, code });
+      set('⚡', 'Envoi de REVE…', 'Ne débranche pas la calculatrice.', 70);
+      await calc.installStorage(storage, () => {});
+      set('✅', "C'est envoyé !", 'Sur la NumWorks : ouvre Python, puis lance « reve.py ».', 100);
+      ipcRenderer.send('usb:result', { sent: true });
+    } catch (e) {
+      set('⚠️', 'Transfert impossible', (e && e.message ? e.message + ' — ' : '') + "Vérifie le câble (il doit transmettre des données), débloque la calculatrice et réessaie. Tu peux aussi utiliser « Exporter le fichier ».", 0, true);
+      ipcRenderer.send('usb:result', { sent: false, error: String(e && e.message || e) });
+      $('go').disabled = false; $('go').textContent = 'Réessayer';
+    }
+    $('close').style.display = 'inline-block';
+  };
+</script>
+</body>
+</html>

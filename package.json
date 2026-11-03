@@ -1,0 +1,82 @@
+{
+  "name": "reve",
+  "productName": "REVE",
+  "version": "1.0.0",
+  "description": "REVE - Révision portable : Moodle -> résumés -> calculatrice",
+  "main": "src/main/main.js",
+  "author": "REVE",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "train": "node tools/train-model.js",
+    "test": "node tools/selftest.js",
+    "demo": "python3 tools/make-demo-courses.py",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "mammoth": "^1.13.0",
+    "pdfjs-dist": "^3.11.174",
+    "upsilon.js": "^1.4.2"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "fr.reve.revision",
+    "productName": "REVE",
+    "copyright": "REVE",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "REVE-${version}-Windows-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "REVE"
+    },
+    "portable": {
+      "artifactName": "REVE-${version}-Windows-portable.exe"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.education",
+      "identity": null,
+      "artifactName": "REVE-${version}-Mac.${ext}"
+    }
+  }
+}
