@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('reve', {
   saveZip: (id) => call('subject:saveZip', id),
   calcBuild: (o) => call('calc:build', o),
   calcExport: (o) => call('calc:export', o),
-  calcNumworks: (o) => call('calc:numworks', o),
+  calcSend: (o) => call('calc:send', o),
   openExternal: (u) => call('open:external', u),
   onProgress: (cb) => ipcRenderer.on('progress', (_e, p) => cb(p)),
 });

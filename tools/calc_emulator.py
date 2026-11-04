@@ -203,34 +203,39 @@ def numworks_device(screen, highlight=None, caption=''):
 
 
 def ti_device(screen, highlight=None, caption=''):
+    """screen : image 265x165 de la zone graphique de la CE."""
     S = 2
     W, H = 470 * S, 900 * S
     im = Image.new('RGB', (W, H + 70 * S), (24, 27, 51))
     d = ImageDraw.Draw(im)
-    rr(d, [15 * S, 15 * S, W - 15 * S, H - 10 * S], 50 * S, (44, 55, 80), (20, 26, 40), 3 * S)
-    d.text((W // 2, 42 * S), 'TI-83 Premium CE  ·  Édition Python', font=font(13 * S, True), fill=(210, 216, 230), anchor='mm')
-    sx, sy = 75 * S, 66 * S
-    rr(d, [sx - 12 * S, sy - 12 * S, sx + 320 * S + 12 * S, sy + 240 * S + 12 * S], 8 * S, (16, 18, 26))
+    rr(d, [15 * S, 15 * S, W - 15 * S, H - 10 * S], 50 * S, (246, 246, 248), (200, 200, 208), 3 * S)
+    rr(d, [15 * S, 15 * S, W - 15 * S, 345 * S], 50 * S, (28, 28, 32))
+    d.rectangle([15 * S, 300 * S, W - 15 * S, 345 * S], fill=(28, 28, 32))
+    d.text((W // 2, 34 * S), 'TI-83 Premium CE', font=font(15 * S, True), fill=(225, 228, 235), anchor='mm')
+    d.text((W // 2, 52 * S), 'EDITION PYTHON', font=font(10 * S, True), fill=(200, 205, 215), anchor='mm')
+    sx, sy = 75 * S, 70 * S
+    rr(d, [sx - 10 * S, sy - 10 * S, sx + 320 * S + 10 * S, sy + 240 * S + 10 * S], 8 * S, (10, 10, 12))
     full = Image.new('RGB', (320, 240), 'white')
     st = ImageDraw.Draw(full)
-    st.rectangle([0, 0, 320, 29], fill=(30, 30, 30))
-    st.text((8, 8), 'PYTHON   REVE', font=font(11, True), fill=(255, 255, 255))
-    st.rectangle([288, 9, 310, 19], outline='white'); st.rectangle([290, 11, 304, 17], fill=(90, 220, 120))
-    full.paste(screen, (0, 30))
+    st.rectangle([0, 0, 320, 31], fill=(90, 90, 96))
+    st.text((6, 3), 'NORMAL FLOTT AUTO RÉEL DEGRÉ MP', font=font(10, True), fill='white')
+    st.text((6, 17), 'REVE', font=font(9, True), fill=(230, 230, 230))
+    st.rectangle([296, 6, 312, 24], outline=(255, 140, 0), width=2); st.rectangle([300, 10, 308, 20], fill=(80, 200, 90))
+    full.paste(screen, (27, 50))
     im.paste(full.resize((320 * S, 240 * S), Image.NEAREST), (sx, sy))
     rows = [
-        [('f1 Y=', ''), ('f2', ''), ('f3', ''), ('f4', ''), ('f5', '')],
-        [('2nde', ''), ('mode', ''), ('suppr', 'del'), ('', ''), ('', '')],
+        [('f(x)', ''), ('fenêtre', ''), ('zoom', ''), ('trace', ''), ('graphe', '')],
+        [('2nde', '2nd'), ('mode', ''), ('suppr', 'del'), ('', ''), ('', '')],
         [('alpha', ''), ('X,T,θ,n', ''), ('stats', ''), ('', ''), ('', '')],
-        [('math', 'reve'), ('apps', ''), ('prgm', ''), ('var', ''), ('annul', 'clear')],
+        [('math', 'math'), ('matrice', ''), ('prgm', ''), ('var', ''), ('annul', 'clear')],
         [('x⁻¹', ''), ('sin', ''), ('cos', ''), ('tan', ''), ('^', '')],
         [('x²', ''), (',', ''), ('(', ''), (')', ''), ('÷', '/')],
         [('log', ''), ('7', '7'), ('8', '8'), ('9', '9'), ('×', '*')],
         [('ln', ''), ('4', '4'), ('5', '5'), ('6', '6'), ('−', '-')],
         [('sto→', ''), ('1', '1'), ('2', '2'), ('3', '3'), ('+', '+')],
-        [('on', ''), ('0', '0'), ('.', '.'), ('(−)', ''), ('entrer', 'exe')],
+        [('on', ''), ('0', '0'), ('.', '.'), ('(−)', ''), ('entrer', 'enter')],
     ]
-    y = 340
+    y = 365
     for ri, row in enumerate(rows):
         x = 30
         kw, gap, kh = 70, 15, 30
@@ -239,32 +244,25 @@ def ti_device(screen, highlight=None, caption=''):
                 x += kw + gap
                 continue
             hl = highlight is not None and k == highlight
-            if ri == 0:
-                fill = (214, 220, 232)
-            elif lab.isdigit() or lab == '.' or lab == '(−)':
-                fill = (232, 235, 240)
-            elif lab == 'entrer':
-                fill = (90, 110, 150)
-            elif lab in ('2nde',):
-                fill = (70, 140, 220)
+            fill = (255, 255, 255)
+            if lab == '2nde':
+                fill = (120, 180, 235)
             elif lab == 'alpha':
-                fill = (90, 180, 110)
-            else:
-                fill = (24, 30, 44)
+                fill = (110, 190, 80)
+            elif lab == 'entrer':
+                fill = (220, 225, 235)
             if hl:
                 fill = (255, 183, 52)
-            rr(d, [x * S, y * S, (x + kw) * S, (y + kh) * S], 8 * S, fill)
-            dark = fill[0] > 150 and not hl
-            d.text(((x + kw / 2) * S, (y + kh / 2) * S), lab, font=font(12 * S, True), fill=(30, 30, 40) if (dark or hl) else (235, 238, 245), anchor='mm')
+            rr(d, [x * S, y * S, (x + kw) * S, (y + kh) * S], 9 * S, fill, (180, 180, 190), 1 * S)
+            d.text(((x + kw / 2) * S, (y + kh / 2) * S), lab, font=font(12 * S, True), fill=(30, 30, 40), anchor='mm')
             if hl:
-                rr(d, [(x - 4) * S, (y - 4) * S, (x + kw + 4) * S, (y + kh + 4) * S], 10 * S, None, (255, 140, 0), 3 * S)
+                rr(d, [(x - 4) * S, (y - 4) * S, (x + kw + 4) * S, (y + kh + 4) * S], 11 * S, None, (255, 120, 0), 3 * S)
             x += kw + gap
-        y += kh + 14
-    # croix directionnelle
-    cx, cy = 368, 422
-    d.ellipse([(cx - 50) * S, (cy - 50) * S, (cx + 50) * S, (cy + 50) * S], fill=(24, 30, 44))
+        y += kh + 13
+    cx, cy = 368, 448
+    d.ellipse([(cx - 50) * S, (cy - 50) * S, (cx + 50) * S, (cy + 50) * S], fill=(255, 255, 255), outline=(180, 180, 190), width=2 * S)
     for (dx, dy, t, k) in [(0, -32, '▲', 'up'), (0, 32, '▼', 'down'), (-32, 0, '◀', 'left'), (32, 0, '▶', 'right')]:
-        d.text(((cx + dx) * S, (cy + dy) * S), t, font=font(15 * S), fill=(255, 183, 52) if highlight == k else (200, 205, 220), anchor='mm')
+        d.text(((cx + dx) * S, (cy + dy) * S), t, font=font(15 * S), fill=(255, 140, 0) if highlight == k else (60, 60, 70), anchor='mm')
     if caption:
         d.text((W // 2, H + 30 * S), caption, font=font(19 * S, True), fill='white', anchor='mm')
     return im.resize((W // 2, (H + 70 * S) // 2), Image.LANCZOS)
@@ -292,34 +290,35 @@ if __name__ == '__main__':
         keys = lambda *ks: [('key', K[k]) for k in ks]
         acts = keys('one', 'two', 'multiplication', 'three', 'exe', 'sqrt', 'two', 'rightparenthesis', 'exe',
                     'nine', 'dot', 'eight', 'one', 'multiplication', 'two') + [('snap', 'calc')] + \
-            keys('toolbox') + [('snap', 'rev1')] + keys('right') + [('snap', 'rev2')] + keys('right', 'right', 'right') + [('snap', 'rev3')] + \
-            keys('ok') + [('snap', 'menu')] + keys('down', 'down', 'ok', 'toolbox', 'exe') + [('snap', 'back')]
+            keys('toolbox') + [('snap', 'matieres')] + keys('ok') + [('snap', 'chapitres')] + keys('ok') + [('snap', 'fiche')] + \
+            keys('right', 'right', 'right') + [('snap', 'fiche2')] + keys('toolbox') + [('snap', 'retour')] + keys('toolbox') + [('snap', 'reouvre')] + \
+            keys('ok') + [('snap', 'menu-chap')] + keys('toolbox') + [('snap', 'back')]
         snaps = run('numworks', script, acts, outdir)
-        a = numworks_device(snaps['calc'], None, '① Écran de calcul normal')
-        b = numworks_device(snaps['rev1'], 'toolbox', '② Touche REVE → fiches')
-        c = numworks_device(snaps['rev3'], 'right', '③ ◀ ▶ change de chapitre')
-        e = numworks_device(snaps['menu'], 'ok', '④ OK : liste des chapitres')
-        side_by_side([a, b, c, e], 'REVE sur NumWorks : calcul ⇄ révision avec la même touche').save(os.path.join(outdir, 'numworks-rendu.png'))
+        a = numworks_device(snaps['calc'], None, '① Écran de calcul')
+        b = numworks_device(snaps['matieres'], 'toolbox', '② Touche REVE → matières')
+        c = numworks_device(snaps['chapitres'], 'ok', '③ OK → chapitres')
+        e = numworks_device(snaps['fiche2'], 'right', '④ Fiche  (◀ ▶ chapitre)')
+        side_by_side([a, b, c, e], 'REVE sur NumWorks : la même touche ouvre et ferme les fiches').save(os.path.join(outdir, 'numworks-rendu.png'))
         for k, im in snaps.items():
             im.resize((640, 444), Image.NEAREST).save(os.path.join(outdir, 'numworks-ecran-%s.png' % k))
-        # vérifie que rappuyer sur la touche REVE ramène bien au calcul
-        assert snaps['back'].getpixel((10, 5)) == (255, 183, 52), 'retour au calcul raté'
+        assert snaps['retour'].getpixel((1, 10)) == (255, 183, 52), 'retour au calcul raté'
+        assert snaps['reouvre'].tobytes() == snaps['fiche2'].tobytes(), 'la fiche ne se rouvre pas au même endroit'
+        assert snaps['back'].getpixel((1, 10)) == (255, 183, 52), 'menu -> calcul raté'
     else:
-        G = {'1': 92, '2': 93, '3': 94, '4': 82, '5': 83, '6': 84, '7': 72, '8': 73, '9': 74, '0': 102, '.': 103, '+': 95, '-': 85, '*': 75, '/': 65,
-             'exe': 105, 'clear': 45, 'up': 25, 'down': 34, 'left': 24, 'right': 26, 'math': 41}
-        keys = lambda *ks: [('key', G[k]) for k in ks]
-        acts = keys('1', '2', '*', '3', 'exe', '9', '.', '8', '1', '*', '2', 'exe', '1', '/', '4') + [('snap', 'calc')] + \
-            keys('math') + [('snap', 'rev1')] + keys('right', 'right') + [('snap', 'rev2')] + keys('down', 'down') + [('snap', 'rev3')] + keys('math') + [('snap', 'back')]
-        snaps = run('ti83', script, acts, outdir)
-        a = ti_device(snaps['calc'], None, '① Écran de calcul normal')
-        b = ti_device(snaps['rev1'], 'reve', '② [math] → fiches')
-        c = ti_device(snaps['rev3'], 'down', '③ ▲ ▼ ◀ ▶ pour naviguer')
-        d = ti_device(snaps['back'], 'reve', '④ [math] à nouveau → calcul')
-        side_by_side([a, b, c, d], 'REVE sur TI-83 Premium CE : calcul ⇄ révision avec la même touche').save(os.path.join(outdir, 'ti83-rendu.png'))
-        for k, im in snaps.items():
-            im.resize((640, 420), Image.NEAREST).save(os.path.join(outdir, 'ti83-ecran-%s.png' % k))
-        # touches de l'autre famille de codes (OS récents) : doivent aussi marcher
-        acts2 = [('key', 143), ('key', 128), ('key', 144), ('key', 5), ('key', 50), ('snap', 'r'), ('key', 50), ('snap', 'c')]
-        s2 = run('ti83', script, acts2, outdir)
-        assert s2['r'].getpixel((10, 5)) == (46, 92, 201) and s2['c'].getpixel((10, 5)) == (40, 40, 40), 'codes systeme KO'
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import ti_basic_emulator as tb
+        D = {'0': 102, '1': 92, '2': 93, '3': 94, '4': 82, '5': 83, '6': 84, '7': 72, '8': 73, '9': 74, '.': 103, '+': 95, '-': 85, '*': 75, '/': 65, '(': 63, ')': 64}
+        k = lambda s: [D[c] for c in s]
+        sc = k('12*3') + [105] + k('9.81*2') + [105] + [21, 61] + k('2)') + [105] + k('1/4') + [('snap', 'calc'), 41, ('snap', 'matieres'), ('menu', 0), ('snap', 'chapitres'),
+              ('menu', 0), ('snap', 'fiche'), 26, ('snap', 'fiche2'), 41, ('snap', 'retour'), 41, ('snap', 'reouvre'), 45, 45, 45]
+        p = tb.run(script, sc)
+        snaps = p.snaps
+        a = ti_device(snaps['calc'], None, '① Écran de calcul')
+        b = ti_device(snaps['matieres'], 'math', '② [math] → matières')
+        c = ti_device(snaps['fiche'], 'enter', '③ Fiche du chapitre')
+        e = ti_device(snaps['retour'], 'math', '④ [math] → retour au calcul')
+        side_by_side([a, b, c, e], 'REVE sur TI-83 Premium CE : programme dans [prgm], comme SNAKE').save(os.path.join(outdir, 'ti83-rendu.png'))
+        for k2, im in snaps.items():
+            im.resize((530, 330), Image.NEAREST).save(os.path.join(outdir, 'ti83-ecran-%s.png' % k2))
+        assert snaps['reouvre'].tobytes() == snaps['fiche2'].tobytes(), 'la fiche ne se rouvre pas au même endroit'
     print('ok', sorted(snaps))

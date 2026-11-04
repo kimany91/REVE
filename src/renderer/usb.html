@@ -2,56 +2,116 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Transfert vers la NumWorks</title>
+<title>Envoi sur la calculatrice</title>
 <style>
-  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f1222; color: #eef0ff; display: grid; place-items: center; height: 100vh; text-align: center; }
-  .box { width: 360px; }
-  .ico { font-size: 54px; }
-  h1 { font-size: 19px; margin: 10px 0 6px; }
-  p { color: #a9aed0; font-size: 14px; line-height: 1.5; margin: 6px 0 16px; }
-  button { background: #ffb734; color: #1b1300; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; padding: 12px 22px; cursor: pointer; }
-  button.sec { background: #262b4a; color: #eef0ff; }
-  .bar { height: 8px; background: #262b4a; border-radius: 6px; overflow: hidden; margin: 14px 0; }
-  .bar i { display: block; height: 100%; width: 0; background: #ffb734; transition: width .4s; }
-  .err { color: #ff8a8a; }
+  :root { --bg: #0f1222; --panel: #171b33; --line: #2a3058; --text: #eef0ff; --muted: #a9aed0; --accent: #ffb734; --good: #3ddc97; --bad: #ff8a8a; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: grid; place-items: center; min-height: 100vh; text-align: center; }
+  .box { width: 420px; padding: 10px 0; }
+  .ico { font-size: 54px; height: 64px; }
+  h1 { font-size: 20px; margin: 8px 0 6px; }
+  p { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 6px 0 14px; }
+  .err { color: var(--bad); }
+  .bar { height: 8px; background: #262b4a; border-radius: 6px; overflow: hidden; margin: 14px 0 18px; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8b7bff, var(--accent)); transition: width .4s; }
+  button { background: var(--accent); color: #1b1300; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; padding: 12px 20px; cursor: pointer; margin: 4px; }
+  button.sec { background: #262b4a; color: var(--text); }
+  button:disabled { opacity: .5; }
+  ol { text-align: left; color: var(--text); font-size: 14px; line-height: 1.7; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 12px 34px; margin: 10px 0 14px; }
+  b.k { background: #2a3058; border-radius: 5px; padding: 1px 6px; font-weight: 700; }
+  .hide { display: none; }
 </style>
 </head>
 <body>
 <div class="box">
   <div class="ico" id="ico">🔌</div>
-  <h1 id="title">Branche ta NumWorks</h1>
-  <p id="msg">Relie la calculatrice à l'ordinateur avec son câble USB, allume-la, puis clique sur « Envoyer ».</p>
+  <h1 id="title"></h1>
+  <p id="msg"></p>
   <div class="bar"><i id="bar"></i></div>
-  <button id="go">Envoyer l'app REVE</button>
-  <button id="close" class="sec" style="display:none">Fermer</button>
+  <ol id="steps" class="hide"></ol>
+  <div>
+    <button id="go"></button>
+    <button id="ticonnect" class="sec hide">Ouvrir TI Connect CE</button>
+    <button id="close" class="sec">Fermer</button>
+  </div>
 </div>
 <script>
   const { ipcRenderer } = require('electron');
-  const Numworks = require('upsilon.js');
-  const code = Buffer.from(new URLSearchParams(location.search).get('code'), 'base64').toString('utf8');
+  const q = new URLSearchParams(location.search);
+  const model = q.get('model');
+  const payload = Buffer.from(q.get('data'), 'base64');
   const $ = (id) => document.getElementById(id);
-  const set = (ico, t, m, pct, err) => { $('ico').textContent = ico; $('title').textContent = t; $('msg').textContent = m; $('msg').className = err ? 'err' : ''; if (pct != null) $('bar').style.width = pct + '%'; };
+  const set = (ico, t, m, pct, err) => {
+    $('ico').textContent = ico; $('title').textContent = t; $('msg').innerHTML = m;
+    $('msg').className = err ? 'err' : '';
+    if (pct != null) $('bar').style.width = pct + '%';
+  };
+  const done = (r) => ipcRenderer.send('usb:result', r);
+  // Si l'ordinateur ne répond pas, on n'attend pas indéfiniment
+  const withTimeout = (p, ms, msg) => Promise.race([p, new Promise((_, ko) => setTimeout(() => ko(new Error(msg)), ms))]);
   $('close').onclick = () => window.close();
+
+  // ---------------- NumWorks : envoi direct (WebUSB)
+  async function sendNumworks() {
+    const Numworks = require('upsilon.js');
+    const calc = new Numworks();
+    set('🔎', 'Recherche de la NumWorks…', 'Garde-la allumée et branchée.', 15);
+    await withTimeout(new Promise((ok, ko) => calc.detect(ok, ko)), 20000, 'NumWorks introuvable');
+    set('📖', 'Lecture de la mémoire…', 'Tes autres scripts sont conservés.', 40);
+    const storage = await calc.backupStorage();
+    storage.records = storage.records.filter((r) => !(r.name === 'reve' && r.type === 'py'));
+    storage.records.push({ name: 'reve', type: 'py', autoImport: false, code: payload.toString('utf8') });
+    set('⚡', 'Envoi de REVE…', 'Ne débranche pas la calculatrice.', 75);
+    await withTimeout(calc.installStorage(storage, () => {}), 60000, "l'envoi a pris trop de temps");
+    set('✅', "C'est sur ta NumWorks !", 'Sur la calculatrice : <b class="k">Python</b> → <b class="k">reve.py</b> → <b class="k">OK</b>.<br>Touche <b class="k">boîte à outils</b> = fiches.', 100);
+  }
+
+  // ---------------- TI-83 Premium CE : envoi direct (WebUSB), sinon TI Connect CE
+  async function sendTI() {
+    const { ticalc, tifiles } = require('ticalc-usb');
+    const file = tifiles.parseFile(new Uint8Array(payload));
+    set('🔎', 'Recherche de la TI…', 'Allume la calculatrice, reste sur l\'écran de calcul, et ferme TI Connect CE s\'il est ouvert.', 15);
+    const connected = new Promise((ok, ko) => {
+      ticalc.addEventListener('connect', ok);
+      setTimeout(() => ko(new Error('La calculatrice ne répond pas.')), 20000);
+    });
+    await withTimeout(ticalc.init({ supportLevel: 'beta' }), 10000, 'USB indisponible');
+    await withTimeout(ticalc.choose({ supportLevel: 'beta' }), 20000, 'TI introuvable');
+    const calc = await connected;
+    if (!(await calc.isReady())) throw new Error("La calculatrice n'est pas prête (reste sur l'écran de calcul).");
+    set('⚡', 'Envoi de REVE…', 'Ne débranche pas la calculatrice.', 60);
+    await withTimeout(calc.sendFile(file), 60000, "l'envoi a pris trop de temps");
+    set('✅', "C'est sur ta TI !", 'Sur la calculatrice : <b class="k">prgm</b> → <b class="k">REVE</b> → <b class="k">entrer</b> → <b class="k">entrer</b>.<br>Touche <b class="k">math</b> = fiches.', 100);
+  }
+
+  async function tiFallback(reason) {
+    const r = await ipcRenderer.invoke('ti:connect');
+    set('🧩', 'On passe par TI Connect CE', (reason ? 'Envoi direct impossible (' + reason + '). ' : '') + (r.found
+      ? 'TI Connect CE vient de s\'ouvrir, et le fichier <b>REVE.8xp</b> est affiché dans ton dossier.'
+      : 'Le fichier <b>REVE.8xp</b> est prêt dans ton dossier. TI Connect CE (gratuit) n\'est pas installé : le bouton ci-dessous ouvre la page de téléchargement.'), 50);
+    $('steps').innerHTML = '<li>Branche la TI et allume-la.</li><li>Dans TI Connect CE, clique sur <b class="k">Calculator Explorer</b> (2e icône à gauche).</li><li><b>Glisse REVE.8xp</b> dans la fenêtre, puis clique sur <b class="k">Send</b>.</li><li>Sur la TI : <b class="k">prgm</b> → <b class="k">REVE</b> → <b class="k">entrer</b>.</li>';
+    $('steps').classList.remove('hide');
+    $('ticonnect').classList.remove('hide');
+    $('ticonnect').onclick = () => ipcRenderer.invoke('ti:connect');
+  }
+
+  const isTI = model === 'ti83';
+  set('🔌', isTI ? 'Branche ta TI-83 Premium CE' : 'Branche ta NumWorks',
+    'Relie la calculatrice à l\'ordinateur avec son câble USB et allume-la, puis clique sur « Envoyer ».', 0);
+  $('go').textContent = 'Envoyer REVE';
   $('go').onclick = async () => {
     $('go').disabled = true;
-    const calc = new Numworks();
     try {
-      set('🔎', 'Recherche de la calculatrice…', 'Garde la NumWorks allumée et branchée.', 15);
-      await new Promise((ok, ko) => calc.detect(ok, ko));
-      set('📖', 'Lecture de la mémoire…', 'Tes autres scripts sont conservés.', 40);
-      const storage = await calc.backupStorage();
-      storage.records = storage.records.filter((r) => !(r.name === 'reve' && r.type === 'py'));
-      storage.records.push({ name: 'reve', type: 'py', autoImport: false, code });
-      set('⚡', 'Envoi de REVE…', 'Ne débranche pas la calculatrice.', 70);
-      await calc.installStorage(storage, () => {});
-      set('✅', "C'est envoyé !", 'Sur la NumWorks : ouvre Python, puis lance « reve.py ».', 100);
-      ipcRenderer.send('usb:result', { sent: true });
+      await (isTI ? sendTI() : sendNumworks());
+      done({ sent: true });
+      $('go').classList.add('hide');
     } catch (e) {
-      set('⚠️', 'Transfert impossible', (e && e.message ? e.message + ' — ' : '') + "Vérifie le câble (il doit transmettre des données), débloque la calculatrice et réessaie. Tu peux aussi utiliser « Exporter le fichier ».", 0, true);
-      ipcRenderer.send('usb:result', { sent: false, error: String(e && e.message || e) });
-      $('go').disabled = false; $('go').textContent = 'Réessayer';
+      const m = (e && e.message) || String(e);
+      done({ sent: false, error: m });
+      if (isTI) { await tiFallback(m); $('go').textContent = 'Réessayer en direct'; }
+      else set('⚠️', 'Envoi impossible', m + ' — Vérifie que le câble transmet bien des données, déverrouille la calculatrice et réessaie. Sinon : bouton « Enregistrer le fichier » puis my.numworks.com.', 0, true);
+      $('go').disabled = false;
+      if (!isTI) $('go').textContent = 'Réessayer';
     }
-    $('close').style.display = 'inline-block';
   };
 </script>
 </body>

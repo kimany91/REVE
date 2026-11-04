@@ -149,7 +149,7 @@ input[type=range] { accent-color: var(--accent); width: 160px; }
 /* Calculatrice dessinée */
 .calc-preview { position: sticky; top: 20px; }
 .device { width: 380px; margin: 0 auto; border-radius: 34px 34px 46px 46px; padding: 22px 30px 28px; background: linear-gradient(180deg, #ffffff, #e9e9ee); box-shadow: 0 30px 60px #0008, inset 0 -6px 0 #cfcfd6; transition: background .3s; }
-.device.ti { background: linear-gradient(180deg, #33405c, #1b2234); box-shadow: 0 30px 60px #0008, inset 0 -6px 0 #10151f; }
+.device.ti { background: linear-gradient(180deg, #1c1c20 0%, #1c1c20 46%, #f4f4f6 46%, #e8e8ec 100%); box-shadow: 0 30px 60px #0008, inset 0 -6px 0 #cfcfd6; }
 .device-top { color: #8a8a96; font-weight: 800; letter-spacing: 2px; font-size: 12px; text-align: center; margin-bottom: 10px; }
 .device.ti .device-top { color: #c9d0e0; }
 #screen { width: 320px; display: block; margin: 0 auto; border-radius: 4px; border: 6px solid #2b2b33; image-rendering: pixelated; background: #fff; }
@@ -167,9 +167,9 @@ input[type=range] { accent-color: var(--accent); width: 160px; }
 .keys .k-reve.pulse-key { animation: keypulse 1.6s infinite; }
 @keyframes keypulse { 50% { box-shadow: 0 0 0 5px #ffb73455; } }
 .keys .k-exe { background: #ffcc70; }
-.device.ti .dpad button, .device.ti .keys button { background: #444f69; color: #e9edf7; box-shadow: 0 2px 0 #11161f; }
+.device.ti .dpad button, .device.ti .keys button { background: #fff; color: #222; box-shadow: 0 2px 0 #b9b9c4; }
 .device.ti .keys .k-reve { background: #4a90e2; color: #fff; }
-.device.ti .keys .k-exe { background: #5d6a88; }
+.device.ti .keys .k-exe { background: #dde2ec; }
 .device button:active { transform: translateY(1px); }
 
 /* ---------- Réglages ---------- */

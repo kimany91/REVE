@@ -32,7 +32,8 @@ jobs:
           node tools/seed-demo.js /tmp/ud
           node tools/build-calc-demo.js /tmp/ud /tmp/calc
           python tools/calc_emulator.py numworks /tmp/calc/reve.py /tmp/out
-          python tools/calc_emulator.py ti83 /tmp/calc/REVE.py /tmp/out
+          python tools/calc_emulator.py ti83 /tmp/calc/REVE.8xp /tmp/out
+          python tools/ti_basic_emulator.py /tmp/calc/REVE.8xp /tmp/out
 
   build:
     needs: tests

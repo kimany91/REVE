@@ -297,11 +297,13 @@ function renderCalc() {
   $('#device-brand').textContent = ti ? 'TI-83 Premium CE' : 'NumWorks';
   $('#k-reve').textContent = ti ? 'math (REVE)' : 'REVE (' + S.numworksKeys[sel.value] + ')';
   $('#k-reve').classList.add('pulse-key');
-  $('#btn-send').textContent = ti ? '💾 Créer le fichier REVE.8xv' : '⚡ Envoyer par USB';
-  $('#btn-export').style.display = ti ? 'none' : '';
+  $('#calc-budget').min = ti ? 6000 : 3000;
+  $('#calc-budget').max = ti ? 60000 : 30000;
+  $('#btn-send').textContent = ti ? '⚡ Envoyer sur la TI' : '⚡ Envoyer sur la NumWorks';
+  $('#btn-export').textContent = ti ? '💾 Enregistrer REVE.8xp' : '💾 Enregistrer reve.py';
   $('#send-hint').innerHTML = ti
-    ? 'Ensuite, ouvre <b>TI Connect CE</b> (gratuit), branche la calculatrice et glisse <b>REVE.8xv</b> dedans (ou REVE.py, TI Connect le convertit). Sur la TI : <b>[prgm]</b> → Python App → REVE.'
-    : 'Branche la NumWorks en USB et clique sur Envoyer. Sur la calculatrice : <b>Python</b> → <b>reve.py</b>.';
+    ? 'Branche la TI en USB et clique sur Envoyer. Si l\'envoi direct ne marche pas, REVE ouvre <b>TI Connect CE</b> tout seul et te montre le fichier à glisser. Sur la TI : <b>[prgm]</b> → <b>REVE</b> → <b>[entrer]</b>.'
+    : 'Branche la NumWorks en USB et clique sur Envoyer. Sur la calculatrice : <b>Python</b> → <b>reve.py</b> → <b>OK</b>.';
   updatePreview();
 }
 
@@ -312,11 +314,14 @@ function updatePreview() {
     const budget = +$('#calc-budget').value;
     $('#budget-val').textContent = (budget / 1000).toFixed(1) + ' Ko';
     const ids = [...calcSel];
-    if (!ids.length) { sim.setData(calcModel, [], []); $('#calc-info').textContent = 'Choisis au moins une matière.'; return; }
+    const empty = calcModel === 'ti83' ? { pages: [], chapters: [], subjects: [] } : { T: [], L: [], CS: [], SN: [] };
+    if (!ids.length) { sim.setData(calcModel, empty); $('#calc-info').textContent = 'Choisis au moins une matière.'; return; }
     try {
       const r = await window.reve.calcBuild({ model: calcModel, subjectIds: ids, key: $('#calc-key').value, budget });
-      sim.setData(calcModel, r.T, r.L);
-      $('#calc-info').innerHTML = `${r.T.length} chapitres · ${(r.bytes / 1000).toFixed(1)} Ko de fiches` + (r.dropped ? ` · <b>${r.dropped} points secondaires retirés</b> pour tenir dans la mémoire (augmente la place si tu veux tout garder)` : ' · tout rentre ✔');
+      const short = { toolbox: 'outils', var: 'var', xnt: 'x,n,t', alpha: 'alpha', imaginary: 'i' }[$('#calc-key').value];
+      sim.setData(calcModel, r, short);
+      const nch = calcModel === 'ti83' ? r.chapters.length : r.T.length;
+      $('#calc-info').innerHTML = `${nch} chapitres · ${(r.bytes / 1000).toFixed(1)} Ko` + (r.dropped ? ` · <b>${r.dropped} points secondaires retirés</b> pour tenir dans la mémoire (augmente la place si tu veux tout garder)` : ' · tout rentre ✔');
     } catch (e) { toast(e.message, true); }
   }, 120);
 }
@@ -327,18 +332,13 @@ $('#calc-budget').onchange = async () => { S = await window.reve.setSettings({ b
 function calcOpts() { return { model: calcModel, subjectIds: [...calcSel], key: $('#calc-key').value, budget: +$('#calc-budget').value }; }
 $('#btn-send').onclick = async () => {
   if (!calcSel.size) return toast('Choisis au moins une matière.', true);
-  if (calcModel === 'ti83') {
-    const files = await window.reve.calcExport(calcOpts()).catch((e) => toast(e.message, true));
-    if (files) toast('Fichiers créés dans Documents/REVE ✔');
-    return;
-  }
-  const r = await window.reve.calcNumworks(calcOpts()).catch((e) => toast(e.message, true));
-  if (r && r.sent) toast('REVE est sur ta NumWorks ✔');
+  const r = await window.reve.calcSend(calcOpts()).catch((e) => toast(e.message, true));
+  if (r && r.sent) toast(calcModel === 'ti83' ? 'REVE est sur ta TI ✔  ([prgm] → REVE)' : 'REVE est sur ta NumWorks ✔');
 };
 $('#btn-export').onclick = async () => {
   if (!calcSel.size) return toast('Choisis au moins une matière.', true);
   const files = await window.reve.calcExport(calcOpts()).catch((e) => toast(e.message, true));
-  if (files) toast('reve.py créé dans Documents/REVE ✔ (à envoyer via my.numworks.com)');
+  if (files) toast('Fichier enregistré dans Documents/REVE ✔');
 };
 document.addEventListener('keydown', (e) => {
   if (!$('#view-calc').classList.contains('active') || !sim || e.target.matches('input, select, [contenteditable=true]')) return;

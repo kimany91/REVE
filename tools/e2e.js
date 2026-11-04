@@ -39,6 +39,7 @@ const { start } = require('./mock-moodle');
   const nw = await page.evaluate((ids) => window.reve.calcBuild({ model: 'numworks', subjectIds: ids, key: 'toolbox' }), ids);
   const files = await app.evaluate(async ({ ipcMain }, ids) => ipcMain._invokeHandlers.get('calc:export')({}, { model: 'ti83', subjectIds: ids }), ids);
   if (!files.ok) throw new Error(files.error);
+  if (path.basename(files.data[0]) !== 'REVE.8xp') throw new Error('fichier TI attendu : REVE.8xp');
   console.log('✔ calculatrice : NumWorks', nw.T.length, 'chapitres,', nw.bytes, 'octets · TI :', files.data.map((f) => path.basename(f)).join(', '));
   await app.close();
   srv.close();

@@ -69,8 +69,20 @@ Dans une matière : chaque point est étiqueté (Définition, Formule, Loi, Mét
 ### 5. Mettre sur la calculatrice
 **Calculatrice** → choisis le modèle et les matières. L'aperçu à droite est interactif (essaie la touche REVE).
 
-| | NumWorks | TI-83 Premium CE (Édition Python) |
+Clique sur **⚡ Envoyer** avec la calculatrice branchée en USB : REVE l'installe directement dessus.
+
+| | NumWorks | TI-83 Premium CE |
 |---|---|---|
+| Ce qui est installé | script Python `reve.py` | programme TI-Basic `REVE` (comme SNAKE) |
+| Envoi | direct par USB depuis REVE | direct par USB ; si ça ne passe pas, REVE **ouvre TI Connect CE tout seul** et te montre `REVE.8xp` à glisser dedans |
+| Lancer | Python → `reve.py` → OK | `[prgm]` → `REVE` → `[entrer]` |
+| Touche REVE (ouvre / ferme) | Boîte à outils (modifiable) | `[math]` |
+| Dans les fiches | ◀ ▶ chapitre, ▲ ▼ lire, OK = liste des chapitres | ◀ ▶ chapitre, ▲ ▼ page, `[entrer]` = liste des chapitres |
+| Quitter | touche maison | `[annul]` sur une ligne vide |
+
+Au premier appui sur la touche REVE, la calculatrice affiche la liste des **matières**, puis des **chapitres**. Ensuite la touche REVE te ramène directement à la fiche où tu étais.
+
+---|---|---|
 | Transfert | **Envoyer par USB** (direct depuis REVE) | **Créer le fichier REVE.8xv**, puis glisse-le dans **TI Connect CE** (gratuit, logiciel de TI) |
 | Lancer | Python → `reve.py` | `[prgm]` → Python App → `REVE` |
 | Touche REVE | Boîte à outils (modifiable) | `[math]` |
@@ -93,8 +105,9 @@ Tout tourne sur l'ordinateur : aucune donnée n'est envoyée ailleurs que vers t
 
 - **Moodle** : REVE utilise la même connexion que l'app mobile Moodle officielle. Si ton école l'a désactivée, REVE passe en mode « session » et lit la page *Ressources* du cours (un peu moins complet).
 - **PDF scannés** (images) : pas de reconnaissance de texte, ils sont ignorés.
-- **TI-83 Premium CE** : il faut l'Édition Python avec un OS récent (module `ti_draw`). Le transfert passe par TI Connect CE (TI ne permet pas l'envoi direct simple comme NumWorks).
-- **NumWorks** sous Windows : si l'envoi USB échoue, utilise **Exporter le fichier** puis envoie `reve.py` via [my.numworks.com](https://my.numworks.com).
+- **Envoi USB** : testé sur ordinateur avec un émulateur, pas encore avec une vraie calculatrice branchée. Sur Windows, l'envoi direct vers la TI peut être bloqué par le pilote de TI : REVE passe alors automatiquement par TI Connect CE.
+- **TI** : le mode calcul de REVE gère + − × ÷, ^, x², √, sin/cos/tan, log/ln, π, parenthèses. Si un calcul donne une erreur de la TI (ex. division par 0), choisis « 1:Quitter » et relance REVE.
+- **NumWorks** : si l'envoi USB échoue, utilise **Enregistrer reve.py** puis envoie-le via [my.numworks.com](https://my.numworks.com).
 - La mémoire des calculatrices est petite : le curseur « Place utilisée » enlève d'abord les points les moins importants.
 
 ---
@@ -107,6 +120,7 @@ npm start            # lancer REVE
 npm run train        # ré-entraîner REVE-Net
 npm test             # analyser demo/Cours_demo.zip
 xvfb-run node tools/e2e.js   # test complet avec un faux Moodle
+python3 tools/ti_basic_emulator.py REVE.8xp sortie/   # exécute le programme TI-Basic
 ```
 
 Structure :
@@ -115,7 +129,11 @@ src/main/main.js            fenêtres, sauvegarde, téléchargement des cours
 src/main/moodle.js          connexion Moodle (jeton app mobile ou session)
 src/main/extract.js         lecture ZIP / PDF / Word / PowerPoint / OpenDocument
 src/main/analyzer/          REVE-Net + résumé par chapitre
-src/main/calc/              génération de l'app calculatrice (+ fichier .8xv TI)
+src/main/calc/              app calculatrice : script NumWorks, programme TI-Basic (.8xp)
 src/renderer/               interface (HTML/CSS/JS) + aperçu calculatrice
 tools/                      entraînement, démo, émulateur, captures, tests
 ```
+
+---
+
+Table des jetons TI-Basic : [TI-Toolkit/tokens](https://github.com/TI-Toolkit/tokens) (via `tivars`). Envoi USB : [upsilon.js](https://github.com/UpsilonNumworks/upsilon.js) (NumWorks) et [ticalc-usb](https://github.com/Timendus/ticalc-usb) (TI).

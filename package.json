@@ -18,6 +18,7 @@
     "adm-zip": "^0.6.1",
     "mammoth": "^1.13.0",
     "pdfjs-dist": "^3.11.174",
+    "ticalc-usb": "^1.1.2",
     "upsilon.js": "^1.4.2"
   },
   "devDependencies": {

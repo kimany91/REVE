@@ -6,7 +6,7 @@ const AdmZip = require('adm-zip');
 const { Moodle } = require('./moodle');
 const { readZip, fileToBlocks, SUPPORTED } = require('./extract');
 const { summarizeDocuments, cleanTitle } = require('./analyzer/summarize');
-const { buildScript, build8xv, MODELS, NUMWORKS_KEYS } = require('./calc/generate');
+const { buildScript, MODELS, NUMWORKS_KEYS } = require('./calc/generate');
 
 app.setName('REVE');
 if (process.env.REVE_USERDATA) app.setPath('userData', process.env.REVE_USERDATA);
@@ -164,52 +164,92 @@ handle('subject:saveZip', async (id) => {
   shell.showItemInFolder(r.filePath);
   return r.filePath;
 });
-handle('calc:build', ({ model, subjectIds, key, budget }) => {
+function buildFor({ model, subjectIds, key, budget }) {
   const subs = state.subjects.filter((s) => subjectIds.includes(s.id));
-  const r = buildScript(subs, { model, key, budget });
-  return { T: r.T, L: r.L, bytes: r.bytes, dropped: r.dropped, model };
-});
-handle('calc:export', async ({ model, subjectIds, key, budget }) => {
-  const subs = state.subjects.filter((s) => subjectIds.includes(s.id));
-  const r = buildScript(subs, { model, key, budget });
+  return buildScript(subs, { model, key, budget });
+}
+// Fichier à envoyer : REVE.8xp (programme TI-Basic) ou reve.py (script NumWorks)
+function calcFile(r) {
+  return r.model === 'ti83' ? { name: 'REVE.8xp', data: r.file } : { name: 'reve.py', data: Buffer.from(r.code, 'utf8') };
+}
+function saveCalcFile(r) {
   const dir = path.join(app.getPath('documents'), 'REVE');
   fs.mkdirSync(dir, { recursive: true });
-  const out = [];
-  if (model === 'ti83') {
-    fs.writeFileSync(path.join(dir, 'REVE.8xv'), build8xv('REVE', r.code));
-    out.push(path.join(dir, 'REVE.8xv'));
+  const f = calcFile(r);
+  const p = path.join(dir, f.name);
+  fs.writeFileSync(p, f.data);
+  return p;
+}
+let lastTIFile = null;
+
+handle('calc:build', (o) => {
+  const r = buildFor(o);
+  if (r.model === 'ti83') {
+    return { model: 'ti83', bytes: r.bytes, dropped: r.dropped, subjects: state.subjects.filter((s) => o.subjectIds.includes(s.id)).map((s) => s.name),
+      chapters: r.chapters.map((c) => ({ si: c.si, subject: c.subject, title: c.title, firstPage: c.firstPage, pageCount: c.pageCount })),
+      pages: r.pages };
   }
-  fs.writeFileSync(path.join(dir, model === 'ti83' ? 'REVE.py' : 'reve.py'), r.code, 'utf8');
-  out.push(path.join(dir, model === 'ti83' ? 'REVE.py' : 'reve.py'));
-  shell.showItemInFolder(out[0]);
-  return out;
+  return { model: r.model, T: r.T, L: r.L, CS: r.CS, SN: r.SN, bytes: r.bytes, dropped: r.dropped };
 });
-handle('calc:numworks', async ({ subjectIds, key, budget }) => {
-  const subs = state.subjects.filter((s) => subjectIds.includes(s.id));
-  const r = buildScript(subs, { model: 'numworks', key, budget });
-  return openUsbWindow(r.code);
+handle('calc:export', (o) => {
+  const p = saveCalcFile(buildFor(o));
+  shell.showItemInFolder(p);
+  return [p];
+});
+handle('calc:send', (o) => {
+  const r = buildFor(o);
+  const f = calcFile(r);
+  if (r.model === 'ti83') lastTIFile = saveCalcFile(r);
+  return openUsbWindow(r.model, f.data);
+});
+
+// Ouvre TI Connect CE (s'il est installé) et montre le fichier REVE.8xp à glisser dedans
+ipcMain.handle('ti:connect', async () => {
+  const file = lastTIFile;
+  if (file) shell.showItemInFolder(file);
+  const { spawn } = require('child_process');
+  if (process.platform === 'win32') {
+    const roots = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
+    for (const r of roots) {
+      for (const sub of ['TI Education\\TI Connect CE\\TI Connect CE.exe', 'TI Education\\TI Connect CE\\TIConnectCE.exe', 'Programs\\TI Connect CE\\TI Connect CE.exe']) {
+        const exe = path.join(r, sub);
+        if (fs.existsSync(exe)) { spawn(exe, [], { detached: true, stdio: 'ignore' }).unref(); return { found: true }; }
+      }
+    }
+  } else if (process.platform === 'darwin') {
+    for (const appPath of ['/Applications/TI Connect CE.app', path.join(app.getPath('home'), 'Applications/TI Connect CE.app')]) {
+      if (fs.existsSync(appPath)) { spawn('open', ['-a', appPath], { detached: true, stdio: 'ignore' }).unref(); return { found: true }; }
+    }
+  }
+  shell.openExternal('https://education.ti.com/fr/products/computer-software/ti-connect-ce-sw');
+  return { found: false };
 });
 handle('open:external', (url) => shell.openExternal(url));
 
-// Fenêtre de transfert USB NumWorks (WebUSB)
-function openUsbWindow(code) {
+// Fenêtre d'envoi USB (WebUSB) : NumWorks (0483:a291) ou TI-83 Premium CE (0451:e008)
+let usbSessionReady = false;
+function openUsbWindow(model, data) {
   return new Promise((resolve) => {
     const usb = new BrowserWindow({
-      width: 460, height: 400, parent: win, modal: true, resizable: false, title: 'Transfert vers la NumWorks', autoHideMenuBar: true,
+      width: 500, height: 520, parent: win, modal: true, resizable: false, title: 'Envoi sur la calculatrice', autoHideMenuBar: true, backgroundColor: '#0f1222',
       webPreferences: { nodeIntegration: true, contextIsolation: false, partition: 'usb' },
     });
     const ses = usb.webContents.session;
-    ses.on('select-usb-device', (event, details, callback) => {
-      event.preventDefault();
-      const d = details.deviceList.find((x) => x.vendorId === 0x0483 && x.productId === 0xa291);
-      callback(d ? d.deviceId : '');
-    });
-    ses.setPermissionCheckHandler(() => true);
-    ses.setDevicePermissionHandler((d) => d.deviceType === 'usb');
+    if (!usbSessionReady) {
+      usbSessionReady = true;
+      ses.on('select-usb-device', (event, details, callback) => {
+        event.preventDefault();
+        const d = details.deviceList.find((x) => (x.vendorId === 0x0483 && x.productId === 0xa291) || x.vendorId === 0x0451);
+        callback(d ? d.deviceId : '');
+      });
+      ses.setPermissionCheckHandler(() => true);
+      ses.setDevicePermissionHandler((d) => d.deviceType === 'usb');
+    }
     let result = { sent: false };
-    ipcMain.once('usb:result', (_e, r) => { result = r; });
-    usb.on('closed', () => resolve(result));
-    usb.loadFile(path.join(__dirname, '../renderer/usb.html'), { query: { code: Buffer.from(code, 'utf8').toString('base64') } });
+    const onResult = (_e, r) => { result = r; };
+    ipcMain.on('usb:result', onResult);
+    usb.on('closed', () => { ipcMain.removeListener('usb:result', onResult); resolve(result); });
+    usb.loadFile(path.join(__dirname, '../renderer/usb.html'), { query: { model, data: Buffer.from(data).toString('base64') } });
   });
 }
 
